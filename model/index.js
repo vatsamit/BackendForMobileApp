@@ -1,4 +1,5 @@
 const { Sequelize } = require('sequelize');
+require('dotenv').config();
 
 const sequelize = new Sequelize(process.env.DATABASE_URL, {
   dialect: 'postgres',
@@ -12,4 +13,11 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
   },
 });
 
-module.exports = { sequelize };
+// ✅ Import model definitions
+const User = require('./userModel')(sequelize); // make sure User.js exports a function
+
+// ✅ Export models and sequelize
+module.exports = {
+  sequelize,
+  User,
+};
