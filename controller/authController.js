@@ -76,3 +76,36 @@ exports.signup = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+exports.editProfile = async (req, res) => {
+  const userId = req.user.id;
+  const { name, email } = req.body;
+
+  if (!name && !email) {
+    return res.status(400).json({ message: 'Nothing to update' });
+  }
+
+  try {
+    if (email) {
+      const existingUser = await User.findOne({ where: { email } });
+      if (existingUser && existingUser.id !== userId) {
+        return res.status(400).json({ message: 'Email already in use by another user' });
+      }
+    }
+
+    const updatedFields = {};
+    if (name) updatedFields.name = name;
+    if (email) updatedFields.email = email;
+
+    const [updated] = await User.update(updatedFields, { where: { id: userId } });
+
+    if (updated) {
+      return res.status(200).json({ message: 'Profile updated successfully' });
+    } else {
+      return res.status(404).json({ message: 'User not found' });
+    }
+  } catch (error) {
+    console.error('Edit profile error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
