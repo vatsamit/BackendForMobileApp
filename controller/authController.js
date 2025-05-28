@@ -86,6 +86,7 @@ exports.editProfile = async (req, res) => {
   }
 
   try {
+    // Check if email is already in use
     if (email) {
       const existingUser = await User.findOne({ where: { email } });
       if (existingUser && existingUser.id !== userId) {
@@ -93,6 +94,7 @@ exports.editProfile = async (req, res) => {
       }
     }
 
+    // Update fields
     const updatedFields = {};
     if (name) updatedFields.name = name;
     if (email) updatedFields.email = email;
@@ -100,7 +102,25 @@ exports.editProfile = async (req, res) => {
     const [updated] = await User.update(updatedFields, { where: { id: userId } });
 
     if (updated) {
-      return res.status(200).json({ message: 'Profile updated successfully' });
+      // Fetch the updated user
+      const updatedUser = await User.findByPk(userId);
+
+      // Generate a new token with updated details
+      const token = jwt.sign(
+        { id: updatedUser.id, name: updatedUser.name, email: updatedUser.email },
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' }
+      );
+
+      return res.status(200).json({
+        message: 'Profile updated successfully',
+        token,
+        user: {
+          id: updatedUser.id,
+          name: updatedUser.name,
+          email: updatedUser.email,
+        }
+      });
     } else {
       return res.status(404).json({ message: 'User not found' });
     }
@@ -109,3 +129,4 @@ exports.editProfile = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
